@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMeans Clustering Algorithm</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        h1 {
+            color: #1E5EB3;
+        }
+        .form-control {
+            margin: 20px 0;
+            padding: 10px;
+            width: 200px;
+        }
+        button {
+            background-color: #1E5EB3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #144785;
+        }
+        #plot {
+            margin-top: 20px;
+            width: 80%;
+            height: 500px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>KMeans Clustering Algorithm</h1>
+    <div>
+        <label for="num-clusters">Number of Clusters (k):</label>
+        <input type="text" id="num-clusters" class="form-control" value="3">
+    </div>
+
+    <div>
+        <label for="init-method">Initialization Method:</label>
+        <select id="init-method" class="form-control">
+            <option value="random">Random</option>
+            <option value="farthest_first">Farthest First</option>
+            <option value="kmeans++">KMeans++</option>
+            <option value="manual">Manual</option>
+        </select>
+    </div>
+
+    <div>
+        <button id="step-kmeans">Step Through KMeans</button>
+        <button id="run-convergence">Run to Convergence</button>
+        <button id="new-dataset">Generate New Dataset</button>
+        <button id="reset">Reset Algorithm</button>
+    </div>
+
+    <div id="plot"></div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

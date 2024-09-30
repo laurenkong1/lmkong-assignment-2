@@ -19,30 +19,120 @@ class KMeans {
             this.centroids = this.getKMeansPlusCentroids();
         }
     }
+getRandomCentroids() {
+   
+    const shuffledData = this.data.sort(() => Math.random() - 0.5);
+    return shuffledData.slice(0, this.k);
+}
 
-    // Dummy functions to be implemented based on logic
-    getRandomCentroids() {
-        return this.data.slice(0, this.k); // Simple version, choose first k points
+getFarthestCentroids() {
+
+    const centroids = [];
+   
+    centroids.push(this.data[Math.floor(Math.random() * this.data.length)]);
+    
+    while (centroids.length < this.k) {
+        let farthestPoint = null;
+        let maxDistance = -1;
+        
+        
+        this.data.forEach(point => {
+            const nearestDistance = Math.min(...centroids.map(centroid => this.getDistance(point, centroid)));
+            
+            if (nearestDistance > maxDistance) {
+                maxDistance = nearestDistance;
+                farthestPoint = point;
+            }
+        });
+        
+        if (farthestPoint) {
+            centroids.push(farthestPoint);
+        }
+    }
+    
+    return centroids;
+}
+
+getKMeansPlusCentroids() {
+
+    const centroids = [];
+    
+
+    centroids.push(this.data[Math.floor(Math.random() * this.data.length)]);
+    
+    while (centroids.length < this.k) {
+        const distances = this.data.map(point => {
+ 
+            const nearestDistance = Math.min(...centroids.map(centroid => this.getDistance(point, centroid)));
+            return nearestDistance ** 2;
+        });
+
+
+        const totalDistance = distances.reduce((sum, distance) => sum + distance, 0);
+        const probabilities = distances.map(distance => distance / totalDistance);
+
+
+        let cumulativeSum = 0;
+        const randomValue = Math.random();
+        for (let i = 0; i < this.data.length; i++) {
+            cumulativeSum += probabilities[i];
+            if (randomValue < cumulativeSum) {
+                centroids.push(this.data[i]);
+                break;
+            }
+        }
     }
 
-    getFarthestCentroids() {
-        // Implement Farthest First algorithm
-        return [];
-    }
+    return centroids;
+}
 
-    getKMeansPlusCentroids() {
-        // Implement KMeans++ algorithm
-        return [];
-    }
+step() {
 
-    // Step through the clustering process
-    step() {
-        // Assign points to nearest centroids
-        this.assignments = this.data.map(point => this.getNearestCentroid(point));
+    this.assignments = this.data.map(point => this.getNearestCentroid(point));
 
-        // Recalculate centroids based on assignments
-        this.centroids = this.recalculateCentroids();
-    }
+
+    this.centroids = this.recalculateCentroids();
+}
+
+
+
+getNearestCentroid(point) {
+    let nearest = null;
+    let minDistance = Infinity;
+
+
+    this.centroids.forEach((centroid, index) => {
+        const distance = this.getDistance(point, centroid);
+        if (distance < minDistance) {
+            minDistance = distance;
+            nearest = index;
+        }
+    });
+
+    return nearest;
+}
+
+recalculateCentroids() {
+    const newCentroids = Array(this.k).fill(null).map(() => Array(this.data[0].length).fill(0));
+    const counts = Array(this.k).fill(0);
+
+    this.assignments.forEach((assignment, index) => {
+        counts[assignment]++;
+        this.data[index].forEach((val, dim) => {
+            newCentroids[assignment][dim] += val;
+        });
+    });
+
+    return newCentroids.map((centroid, i) => {
+        if (counts[i] === 0) return centroid;
+        return centroid.map(val => val / counts[i]);
+    });
+}
+
+getDistance(point1, point2) {
+    return Math.sqrt(point1.reduce((sum, value, index) => sum + Math.pow(value - point2[index], 2), 0));
+}
+
 
     getNearestCentroid(point) {
         let minDist = Infinity;
@@ -82,12 +172,12 @@ class KMeans {
     }
 }
 
-// Event listeners for buttons
+
 document.getElementById('step-btn').addEventListener('click', function() {
     const k = document.getElementById('k-value').value;
     const initMethod = document.getElementById('init-method').value;
 
-    // Send a request to the server to step through KMeans
+   
     fetch('/step', {
         method: 'POST',
         headers: {
@@ -96,7 +186,6 @@ document.getElementById('step-btn').addEventListener('click', function() {
         body: JSON.stringify({ k: k, init: initMethod }),
     }).then(response => response.json()).then(data => {
         if (data.status === 'step_complete') {
-            // Update the plot with the new step
             document.getElementById('cluster-plot').src = `/plot.png?k=${k}&init=${initMethod}&step=${Date.now()}`;
         }
     });
@@ -105,7 +194,6 @@ document.getElementById('converge-btn').addEventListener('click', function() {
     const k = document.getElementById('k-value').value;
     const initMethod = document.getElementById('init-method').value;
 
-    // Send a request to the server to run to convergence
     fetch('/converge', {
         method: 'POST',
         headers: {
@@ -114,18 +202,15 @@ document.getElementById('converge-btn').addEventListener('click', function() {
         body: JSON.stringify({ k: k, init: initMethod }),
     }).then(response => response.json()).then(data => {
         if (data.status === 'converged') {
-            // Update the plot with the final result
             document.getElementById('cluster-plot').src = `/plot.png?k=${k}&init=${initMethod}&converge=${Date.now()}`;
         }
     });
 });
 
 document.getElementById('update-btn').addEventListener('click', function() {
-    // Get the user's input
     const k = document.getElementById('k-value').value;
     const initMethod = document.getElementById('init-method').value;
 
-    // Update the image source with new query parameters
     const img = document.getElementById('cluster-plot');
     img.src = `/plot.png?k=${k}&init=${initMethod}`;
 });
@@ -134,7 +219,6 @@ document.getElementById('new-dataset-btn').addEventListener('click', function() 
     const k = document.getElementById('k-value').value;
     const initMethod = document.getElementById('init-method').value;
 
-    // Send a request to the server to generate a new dataset
     fetch('/new_dataset', {
         method: 'POST',
         headers: {
@@ -142,7 +226,6 @@ document.getElementById('new-dataset-btn').addEventListener('click', function() 
         }
     }).then(response => response.json()).then(data => {
         if (data.status === 'dataset_generated') {
-            // Update the plot with the new dataset
             document.getElementById('cluster-plot').src = `/plot.png?k=${k}&init=${initMethod}&newdataset=${Date.now()}`;
         }
     });
@@ -152,7 +235,6 @@ document.getElementById('reset-btn').addEventListener('click', function() {
     const k = document.getElementById('k-value').value;
     const initMethod = document.getElementById('init-method').value;
 
-    // Send a request to the server to reset the KMeans algorithm
     fetch('/reset', {
         method: 'POST',
         headers: {
@@ -161,17 +243,18 @@ document.getElementById('reset-btn').addEventListener('click', function() {
         body: JSON.stringify({ k: k, init: initMethod }),
     }).then(response => response.json()).then(data => {
         if (data.status === 'reset_complete') {
-            // Update the plot with the reset algorithm
             document.getElementById('cluster-plot').src = `/plot.png?k=${k}&init=${initMethod}&reset=${Date.now()}`;
         }
     });
 });
 
-// Placeholder for dataset generation and plotting
+document.getElementById("initMethod").addEventListener("change", function() {
+    updateClustering();
+});
+
 let data = generateNewDataset();
 let kmeans = new KMeans(3, data, 'Random');
 
-// Generate random dataset
 function generateNewDataset() {
     data = [];
     for (let i = 0; i < 100; i++) {
@@ -180,7 +263,6 @@ function generateNewDataset() {
     return data;
 }
 
-// Draw the plot with centroids and points
 function drawPlot() {
     const canvas = document.getElementById('cluster-plot');
     const ctx = canvas.getContext('2d');
@@ -189,7 +271,6 @@ function drawPlot() {
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw points
     data.forEach((point, i) => {
         ctx.fillStyle = 'gray';
         ctx.beginPath();
@@ -197,7 +278,38 @@ function drawPlot() {
         ctx.fill();
     });
 
-    // Draw centroids
+function updateClustering() {
+    const initMethod = document.getElementById("initMethod").value;
+    const k = parseInt(document.getElementById("kValue").value);
+        
+    if (initMethod === 'random') {
+        centroids = getRandomCentroids(k);
+    } else if (initMethod === 'farthest') {
+        centroids = getFarthestCentroids(k);
+    } else if (initMethod === 'kmeans++') {
+        centroids = getKMeansPlusCentroids(k);
+    }
+    drawVisualization(centroids);
+    }
+
+function drawVisualization(centroids) {
+    const canvas = document.getElementById("clusteringCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    centroids.forEach(centroid => {
+        ctx.beginPath();
+        ctx.arc(centroid[0], centroid[1], 5, 0, 2 * Math.PI);
+        ctx.fill();
+        });
+    }
+function recalculateAndUpdate() {
+    step();
+    drawVisualization(centroids); 
+    }
+    
+    
+    
     kmeans.centroids.forEach(centroid => {
         ctx.fillStyle = 'red';
         ctx.beginPath();
